@@ -1,16 +1,52 @@
-# This is a sample Python script.
+# from PIL import Image
+# import img2pdf
+# import os
+#
+# def images_to_pdf(image_paths, pdf_path):
+#     pdf_bytes = img2pdf.convert([Image.open(img).filename for img in image_paths])
+#     with open(pdf_path, "wb") as file:
+#         file.write(pdf_bytes)
+#
+# image_files = os.listdir("patram")
+# images_to_pdf(image_files, "output.pdf")
 
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
 
+import streamlit as st
+from PIL import Image
+import img2pdf
+import os
+from io import BytesIO
 
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
+st.set_page_config(page_title="Image to PDF Converter", page_icon="📄")
 
+st.title("🖼️ Image to PDF Converter")
+st.write("Upload your images below to convert them into a single PDF.")
 
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    print_hi('PyCharm')
+uploaded_files = st.file_uploader("Choose image files", type=["jpg", "jpeg", "png"], accept_multiple_files=True)
 
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+if uploaded_files:
+    st.write("### Uploaded Images:")
+    images = []
+    for uploaded_file in uploaded_files:
+        image = Image.open(uploaded_file)
+        images.append(image)
+        st.image(image, caption=uploaded_file.name, use_column_width=True)
+
+    if st.button("Convert to PDF"):
+        image_bytes_list = []
+        for img in images:
+            img_io = BytesIO()
+            rgb_img = img.convert("RGB")  # Ensure it's in RGB mode
+            rgb_img.save(img_io, format='JPEG')
+            img_io.seek(0)
+            image_bytes_list.append(img_io.read())
+
+        pdf_bytes = img2pdf.convert(image_bytes_list)
+        st.success("✅ PDF generated successfully!")
+
+        st.download_button(
+            label="📥 Download PDF",
+            data=pdf_bytes,
+            file_name="converted_output.pdf",
+            mime="application/pdf"
+        )
